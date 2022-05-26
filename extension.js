@@ -82,55 +82,70 @@ async function showCitationSearcher(searchTerm) {
 }
 
 function loadConfig() {
+  searchableData = null;
+
   var dataPath = config.libraryPath;
   if (dataPath[0] === '~') {
     dataPath = path.join(process.env.HOME, dataPath.slice(1));
   }
   dataPath = path.resolve(dataPath);
 
+  const libs = [];
+
   if (!fs.existsSync(dataPath)) {
-    vscode.window.showErrorMessage(`${config.libraryPath} does not exist...`);
-    searchableData = null;
+    vscode.window.showErrorMessage(`${config.libraryPath} does not exist.`);
     return;
   }
 
-  const citeDataText = fs.readFileSync(dataPath).toString();
-  var citeData = [];
-  try {
-    citeData = JSON.parse(citeDataText);
-  } catch(err) {
-    vscode.window.showErrorMessage(`${config.libraryPath} has invalid JSON...\n${err}`);
-    searchableData = null;
+  libs.push(dataPath);
+
+  if (libs.length == 0) {
+    vscode.window.showErrorMessage(`No CSL files to load.`);
     return;
   }
-  searchableData = new MiniSearch({
-    idField: 'citation-key',
-    fields: ['citation-key', 'authorSearch', 'title', 'short-title', 'keyword'],
-    storeFields: ['citation-key', 'author', 'title', 'issued'],
-    extractField: (doc, fn) => {
-      if (fn == "title" || fn == "short-title" || fn == "keyword") {
-        // probably a better way to strip HTML
-        const f = doc[fn];
-        if (f == undefined) {
-          return "";
-        }
-        return f.replace(/<\/?[^>]+(>|$)/g, "");
-      }
-      if (fn == "authorSearch") {
-        const authorList = doc["author"];
-        if (authorList == undefined) {
-          return "";
-        }
-        var aTerms = [];
-        authorList.forEach(a => {
-          Object.values(a).forEach(af => aTerms.push(af))
-        });
-        return aTerms.join(" ");
-      }
-      return doc[fn];
+
+  libs.forEach(libPath => {
+    const citeDataText = fs.readFileSync(libPath).toString();
+    var citeData = [];
+    try {
+      citeData = JSON.parse(citeDataText);
+    } catch(err) {
+      vscode.window.showErrorMessage(`${config.libraryPath} has invalid JSON.\n${err}`);
+      return;
     }
+
+    if (searchableData == null) {
+      searchableData = new MiniSearch({
+        idField: 'citation-key',
+        fields: ['citation-key', 'authorSearch', 'title', 'short-title', 'keyword'],
+        storeFields: ['citation-key', 'author', 'title', 'issued'],
+        extractField: (doc, fn) => {
+          if (fn == "title" || fn == "short-title" || fn == "keyword") {
+            // probably a better way to strip HTML
+            const f = doc[fn];
+            if (f == undefined) {
+              return "";
+            }
+            return f.replace(/<\/?[^>]+(>|$)/g, "");
+          }
+          if (fn == "authorSearch") {
+            const authorList = doc["author"];
+            if (authorList == undefined) {
+              return "";
+            }
+            var aTerms = [];
+            authorList.forEach(a => {
+              Object.values(a).forEach(af => aTerms.push(af))
+            });
+            return aTerms.join(" ");
+          }
+          return doc[fn];
+        }
+      });
+    }
+
+    searchableData.addAll(citeData);
   });
-  searchableData.addAll(citeData);
 }
 
 /**
@@ -144,8 +159,15 @@ function activate(context) {
       showCitationSearcher();
     }
     else {
-      vscode.window.showErrorMessage(`No citation data loaded...`);
+      vscode.window.showErrorMessage(`No citation data loaded.`);
     }
+  });
+
+  context.subscriptions.push(disposable);
+
+  disposable = vscode.commands.registerCommand('csl-json-citation-picker.reloadLibrary', function() {
+    loadConfig();
+    vscode.window.showInformationMessage("Reloaded citation library!")
   });
 
   context.subscriptions.push(disposable);

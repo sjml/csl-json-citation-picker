@@ -2,22 +2,33 @@
   "name": "csl-json-citation-picker",
   "displayName": "CSL JSON Citation Picker",
   "description": "Search your CSL JSON library for citations and insert them into Markdown.",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "publisher": "ShaneLiesegang",
+  "icon": "icon/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sjml/csl-json-citation-picker"
+  },
   "engines": {
     "vscode": "^1.67.0"
   },
   "categories": [
-    "Other"
+    "Other", "Education"
   ],
   "activationEvents": [
-    "onCommand:csl-json-citation-picker.insertCitation"
+    "onCommand:csl-json-citation-picker.insertCitation",
+    "onCommand:csl-json-citation-picker.reloadLibrary"
   ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
       {
         "command": "csl-json-citation-picker.insertCitation",
-        "title": "Insert Citation"
+        "title": "CSL: Insert Citation"
+      },
+      {
+        "command": "csl-json-citation-picker.reloadLibrary",
+        "title": "CSL: Reload Citation Library"
       }
     ],
     "keybindings": [
@@ -41,7 +52,8 @@
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run lint",
-    "test": "node ./test/runTest.js"
+    "test": "node ./test/runTest.js",
+    "package": "vsce package"
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
@@ -52,7 +64,8 @@
     "eslint": "^8.14.0",
     "glob": "^8.0.1",
     "mocha": "^9.2.2",
-    "typescript": "^4.6.4"
+    "typescript": "^4.6.4",
+    "vsce": "^2.8.0"
   },
   "dependencies": {
     "minisearch": "^4.0.3"
