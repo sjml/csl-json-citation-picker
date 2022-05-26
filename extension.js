@@ -7,19 +7,8 @@ const MiniSearch = require('minisearch');
 
 var searchableData = null;
 
-async function showCitationSearcher() {
-  var searchTerm = await vscode.window.showInputBox({
-    placeHolder: "Search for a citation entry...",
-    prompt: "Enter search terms (author, title, etc.)",
-  });
-
-  const results = searchableData.search(searchTerm);
-  if (results.length == 0) {
-    vscode.window.showWarningMessage(`No results found for '${searchTerm}'.`);
-    return;
-  }
-
-  const qpItems = results.map((r) => {
+async function showCitationPicker(searchTerm, resultSet) {
+  const qpItems = resultSet.map((r) => {
     var authorString = null;
     if (r['author']) {
       const auth = r['author'][0];
@@ -55,8 +44,12 @@ async function showCitationSearcher() {
     }
   });
 
-  var chosenCite = await vscode.window.showQuickPick(qpItems);
+  var chosenCite = await vscode.window.showQuickPick(qpItems, {
+    matchOnDescription: true,
+    matchOnDetail: true,
+  });
   if (chosenCite == undefined) {
+    showCitationSearcher(searchTerm);
     return;
   }
 
@@ -69,7 +62,23 @@ async function showCitationSearcher() {
   editor.edit(e => editor.selections.forEach(s => {
     e.delete(s);
     e.insert(s.start, `@${chosenCite['description']} `);
-  }))
+  }));
+}
+
+async function showCitationSearcher(searchTerm) {
+  var searchedTerm = await vscode.window.showInputBox({
+    value: searchTerm,
+    placeHolder: "Search for a citation entry...",
+    prompt: "Enter search terms (author, title, etc.)",
+  });
+
+  const results = searchableData.search(searchedTerm, {prefix: true});
+  if (results.length == 0) {
+    vscode.window.showWarningMessage(`No results found for '${searchedTerm}'.`);
+    return;
+  }
+
+  showCitationPicker(searchedTerm, results);
 }
 
 function loadConfig() {
