@@ -72,9 +72,14 @@ async function showCitationSearcher(searchTerm) {
     prompt: "Enter search terms (author, title, etc.)",
   });
 
+  if (searchedTerm == undefined) {
+    return;
+  }
+
   const results = searchableData.search(searchedTerm, {prefix: true});
   if (results.length == 0) {
     vscode.window.showWarningMessage(`No results found for '${searchedTerm}'.`);
+    showCitationSearcher(searchedTerm);
     return;
   }
 
