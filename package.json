@@ -2,7 +2,7 @@
   "name": "csl-json-citation-picker",
   "displayName": "CSL JSON Citation Picker",
   "description": "Search your CSL JSON library for citations and insert them into Markdown.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "ShaneLiesegang",
   "icon": "icon/icon.png",
   "repository": {

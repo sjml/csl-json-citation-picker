@@ -7,6 +7,19 @@ const MiniSearch = require('minisearch');
 
 var searchableData = null;
 
+function getShiftedCharacter(document, position, delta) {
+  const line = document.lineAt(position.line);
+
+  if (delta > 0) {
+    delta -= 1;
+  }
+  const newPos = position.character + delta;
+  if (newPos < 0 || newPos >= line.text.length) {
+    return null;
+  }
+  return line.text[newPos];
+}
+
 async function showCitationPicker(searchTerm, resultSet) {
   const qpItems = resultSet.map((r) => {
     var authorString = null;
@@ -55,13 +68,30 @@ async function showCitationPicker(searchTerm, resultSet) {
 
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
-    vscode.window.showErrorMessage(`No editor to insert citation!`);
+    vscode.window.showErrorMessage("No editor to insert citation!");
     return;
   }
 
   editor.edit(e => editor.selections.forEach(s => {
-    e.delete(s);
-    e.insert(s.start, `@${chosenCite['description']} `);
+
+    let startPosition = s.start;
+    let endPosition = s.end;
+    if ("@" == getShiftedCharacter(editor.document, startPosition, -1)) {
+      startPosition = startPosition.translate({characterDelta: -1});
+    }
+    if ("[" == getShiftedCharacter(editor.document, startPosition, - 1)) {
+      startPosition = startPosition.translate({characterDelta: -1});
+    }
+    if ("]" == getShiftedCharacter(editor.document, endPosition, 1)) {
+      endPosition = endPosition.translate({characterDelta: 1});
+    }
+
+    const editRange = new vscode.Range(startPosition, endPosition);
+    e.delete(editRange);
+
+    // e.insert(editRange.start, `[@${chosenCite['description']}]`);
+    const snipString = new vscode.SnippetString(`[@${chosenCite['description']}` + "${1:}]$0");
+    editor.insertSnippet(snipString, editRange.start);
   }));
 }
 
