@@ -10,5 +10,5 @@
     * https://code.visualstudio.com/api/references/vscode-api#WebviewView
 * cache used references so they appear as options on first entry?
   * might be the same issue as the live-search; I don't think I can mix a text input and a picker :(
-
+  * **COULD** do them as an autocomplete when you type `@` though...
 
